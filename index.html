@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script defer src="./components.js"></script>
+</head>
+
+<body>
+    <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            min-height: 5000px;
+        }
+
+        kos-slider {
+            display: block;
+            overflow: hidden;
+            /* Hide the non-visible slides */
+        }
+
+        .slider-container {
+            display: flex;
+            transition: transform 0.2s ease;
+        }
+
+        .kos-slide {
+            flex: 0 0 auto;
+            /* Do not grow, do not shrink, initial basis auto */
+            min-width: 100%;
+            /* Minimum width for each slide */
+            cursor: pointer;
+            /* Space between slides */
+            min-height: 400px;
+        }
+
+        .kos-slide * {
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .test-slide-inside {
+            margin: 1rem;
+            padding: 1rem;
+            min-height: 500px;
+            background-color: #f6ffa7;
+        }
+
+        @media (min-width: 768px) {
+
+            /* For tablets */
+            .kos-slide {
+                min-width: calc(100% / 2);
+                /* Adjust based on tabletPerView */
+            }
+        }
+
+        @media (min-width: 1024px) {
+
+            /* For desktops */
+            .kos-slide {
+                min-width: calc(100% / 3);
+                /* Adjust based on desktopPerView */
+            }
+        }
+    </style>
+
+    <kos-slider auto-loop infinite-loop desktop-per-view="3" tablet-per-view="2" mobile-epr-view="1">
+        <div class="slider-container">
+            <div class="kos-slide">
+                <div class="test-slide-inside">Test 1</div>
+            </div>
+            <div class="kos-slide">
+                <div class="test-slide-inside">Test 2</div>
+            </div>
+            <div class="kos-slide">
+                <div class="test-slide-inside">Test 3</div>
+            </div>
+            <!-- <div class="kos-slide">
+                <div class="test-slide-inside">Test 2</div>
+            </div>
+            <div class="kos-slide">
+                <div class="test-slide-inside">Test 3</div>
+            </div>
+            <div class="kos-slide">
+                <div class="test-slide-inside">Test 4</div>
+            </div>
+            <div class="kos-slide">
+                <div class="test-slide-inside">Test 5</div>
+            </div>
+            <div class="kos-slide">
+                <div class="test-slide-inside">Test 6</div>
+            </div>
+            <div class="kos-slide">
+                <div class="test-slide-inside">Test 7</div>
+            </div> -->
+        </div>
+    </kos-slider>
+</body>
+
+</html>
