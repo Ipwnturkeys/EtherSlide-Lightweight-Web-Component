@@ -1,3 +1,8 @@
+/**
+ * Represents a slider component.
+ * @class
+ * @extends HTMLElement
+ */
 class Slider extends HTMLElement {
     constructor() {
         super();
@@ -14,7 +19,7 @@ class Slider extends HTMLElement {
         this.tabletPerView ||= 1; // Number of slides per view on tablet
         this.mobilePerView ||= 1; // Number of slides per view on mobile
     
-        this.autoLoopInterval = 3000; // Time in ms between automatic transitions
+        this.autoLoopInterval = 1000; // Time in ms between automatic transitions
         this.slides = []; // Array to store slides
 
         this.isHorizontalSwipe = null; // Initialize to null
@@ -56,6 +61,10 @@ class Slider extends HTMLElement {
         }
     }
 
+    /**
+     * Prepares the slider for an infinite loop by cloning slides if available,
+     * or sets up a MutationObserver to wait for slides to be available.
+     */
     prepareInfiniteLoop = () => {
         if (this.slides && this.slides.length > 0) {
             this.cloneSlidesForLoop();
@@ -75,6 +84,11 @@ class Slider extends HTMLElement {
         }
     }
 
+    /**
+     * Starts the auto loop for the slider.
+     * If there is an existing timer, it will be cleared before starting a new one.
+     * The auto loop advances the slide and recursively calls itself to create a loop.
+     */
     startAutoLoop() {
         if (this.autoLoopTimer) {
             clearTimeout(this.autoLoopTimer); // Clear existing timer if any
@@ -86,17 +100,62 @@ class Slider extends HTMLElement {
         }, this.autoLoopInterval);
     }
 
+    /**
+     * Advances the slide to the next position.
+     * 
+     * @returns {void}
+     */
     advanceSlide() {
         if (!this.isAnimating && !this.isDragging) {
             this.slideIndex++;
-            // Adjusting this check to account for the extra cloned slides
-            if (this.slideIndex > this.slides.length - this.desktopPerView) {
-                this.slideIndex = this.desktopPerView; // This should be the first real slide
+    
+            // Check if nearing the end of the slides and clone more slides if needed
+            if (this.infiniteLoop && this.slideIndex >= this.slides.length - this.desktopPerView) {
+                this.cloneAdditionalSlides();
             }
+    
+            this.removeOldClones(); // Remove old clones
             this.updateSlidePosition();
         }
     }
 
+    cloneAdditionalSlides() {
+        const sliderContainer = this.querySelector('.slider-container');
+        const numOfClones = Math.max(this.desktopPerView, this.tabletPerView, this.mobilePerView);
+    
+        // Add clones to the end
+        for (let i = 0; i < numOfClones; i++) {
+            const clone = this.slides[i % this.slides.length].cloneNode(true);
+            sliderContainer.appendChild(clone);
+        }
+    
+        this.slides = Array.from(this.querySelectorAll('.kos-slide'));
+    }
+
+    removeOldClones() {
+        const sliderContainer = this.querySelector('.slider-container');
+        const numOfClones = Math.max(this.desktopPerView, this.tabletPerView, this.mobilePerView);
+        const totalSlides = this.slides.length;
+        const originalSlidesCount = totalSlides - 2 * numOfClones;
+    
+        if (this.slideIndex >= originalSlidesCount + numOfClones || this.slideIndex < numOfClones) {
+            for (let i = 0; i < numOfClones; i++) {
+                if (this.slideIndex < numOfClones) {
+                    const lastSlide = sliderContainer.lastElementChild;
+                    sliderContainer.removeChild(lastSlide);
+                } else {
+                    const firstSlide = sliderContainer.firstElementChild;
+                    sliderContainer.removeChild(firstSlide);
+                }
+            }
+        }
+    
+        this.slides = Array.from(this.querySelectorAll('.kos-slide'));
+    }
+
+    /**
+     * Clones the slides for the loop functionality.
+     */
     cloneSlidesForLoop() {
         const numOfClones = Math.max(this.desktopPerView, this.tabletPerView, this.mobilePerView);
         const sliderContainer = this.querySelector('.slider-container');
@@ -121,6 +180,9 @@ class Slider extends HTMLElement {
         this.updateSlidePosition(true); // Skip animation on initial positioning
     }
 
+    /**
+     * Sets up event listeners for touch and mouse events.
+     */
     setupEventListeners = () => {
         // Touch events
         this.addEventListener('touchstart', this.handleStart);
@@ -133,6 +195,10 @@ class Slider extends HTMLElement {
         document.addEventListener('mouseup', this.handleEnd);
     }
 
+    /**
+     * Updates the position of the slide in the slider container.
+     * @param {boolean} immediate - Indicates whether the transition should be immediate or not. Default is false.
+     */
     updateSlidePosition(immediate = false) {
         const sliderContainer = this.querySelector('.slider-container');
         const slideWidth = this.slides[0].clientWidth;
@@ -159,6 +225,10 @@ class Slider extends HTMLElement {
         }
     }
 
+    /**
+     * Handles the transition end event.
+     * Starts the next slide after the current transition has ended if autoLoop is enabled and not currently dragging.
+     */
     handleTransitionEnd() {
         // Start the next slide after the current transition has ended
         if (this.autoLoop && !this.isDragging) {
@@ -166,6 +236,10 @@ class Slider extends HTMLElement {
         }
     }
 
+    /**
+     * Sets the translateX value of the slider container without animation.
+     * @param {number} translateX - The translateX value in pixels.
+     */
     setTranslateWithoutAnimation = (translateX) => {
         const sliderContainer = this.querySelector('.slider-container');
         sliderContainer.style.transition = 'none';
@@ -198,6 +272,11 @@ class Slider extends HTMLElement {
         }
     }
 
+    /**
+     * Handles the move event for the slider component.
+     * 
+     * @param {Event} event - The move event.
+     */
     handleMove = (event) => {
         if (!this.isDragging) return;
 
@@ -226,6 +305,9 @@ class Slider extends HTMLElement {
         this.lastMoveTime = now;
     }
 
+    /**
+     * Handles the end of dragging event.
+     */
     handleEnd = () => {
         console.log('End dragging');
         if (this.isHorizontalSwipe) {
@@ -262,13 +344,32 @@ class Slider extends HTMLElement {
         if (this.autoLoop) {
             setTimeout(() => this.startAutoLoop(), 5000); // Resume with a delay
         }
+
+        if (this.infiniteLoop) {
+            if (this.slideIndex < 0) {
+                this.cloneAdditionalSlides(); // Clone additional slides as needed
+            } else if (this.slideIndex >= this.slides.length - this.desktopPerView) {
+                this.cloneAdditionalSlides();
+            }
+        }
+    
+        this.removeOldClones(); // Remove old clones
+        this.updateSlidePosition();
     }
 
+    /**
+     * Sets the translateX value of the slider container.
+     * @param {number} translateX - The value to set for the translateX property.
+     */
     setTranslate = (translateX) => {
         const sliderContainer = this.querySelector('.slider-container');
         sliderContainer.style.transform = `translateX(${translateX}px)`;
     }
 
+    /**
+     * Returns the current translateX value of the slider container.
+     * @returns {number} The translateX value.
+     */
     getCurrentTranslate = () => {
         const sliderContainer = this.querySelector('.slider-container');
         const style = window.getComputedStyle(sliderContainer);
